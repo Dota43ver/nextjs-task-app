@@ -64,8 +64,37 @@ export async function DELETE(request: Request, { params }: Params) {
   }
 }
 
-export function PUT(request: Request) {
-  return NextResponse.json({
-    message: "updating single note...",
-  });
+export async function PUT(request: Request, { params }: Params) {
+  try {
+    const { title, content } = await request.json();
+    const updatedNote = await prisma.note.update({
+      where: {
+        id: Number(params.id),
+      },
+      data: {
+        title,
+        content,
+      },
+    });
+    return NextResponse.json(updatedNote);
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2025") {
+        return NextResponse.json(
+          {
+            message: "Note not found",
+          },
+          {
+            status: 404,
+          }
+        );
+      }
+      return NextResponse.json(
+        {
+          message: error.message,
+        },
+        { status: 500 }
+      );
+    }
+  }
 }
