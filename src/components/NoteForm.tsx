@@ -2,12 +2,12 @@
 import { useState, useRef, useEffect } from "react";
 import { useNotes } from "@/context/NoteContext";
 
-const NoteForm = () => {
+function NoteForm() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const titleRef = useRef<HTMLInputElement>(null);
 
-  const { createNote, selectedNote, setSelectedNote } = useNotes();
+  const { createNote, selectedNote, setSelectedNote, updateNote } = useNotes();
 
   useEffect(() => {
     if (selectedNote) {
@@ -20,12 +20,23 @@ const NoteForm = () => {
     <form
       onSubmit={async (e) => {
         e.preventDefault();
-        await createNote({
-          title,
-          content,
-        });
+
+        if (selectedNote) {
+          await updateNote(selectedNote.id, {
+            title,
+            content,
+          })
+          setSelectedNote(null)
+        } else {
+          await createNote({
+            title,
+            content,
+          });
+        }
+
         setTitle("");
         setContent("");
+
         titleRef.current?.focus();
       }}
     >
@@ -39,6 +50,7 @@ const NoteForm = () => {
         value={title}
         ref={titleRef}
       />
+
       <textarea
         name="title"
         placeholder="Content"
@@ -46,27 +58,32 @@ const NoteForm = () => {
         onChange={(e) => setContent(e.target.value)}
         value={content}
       ></textarea>
+
       <div className="flex justify-end gap-x-2">
         <button
+          className="px-5 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={!title || !content}
           type="submit"
-          className="px-5 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
         >
-          create
+          {selectedNote ? "Update" : "Create"}
         </button>
+
         {selectedNote && (
           <button
+            className="px-5 py-2 text-black bg-slate-400 hover:bg-slate-500 rounded-md"
             type="button"
-            onClick={() => {setSelectedNote(null);
-               setTitle("");
-              setContent("")} }
-            className="px-5 py-2 text-black bg-slate-400 rounded-md hover:bg-slate-500"
+            onClick={() => {
+              setSelectedNote(null);
+              setTitle("");
+              setContent("");
+            }}
           >
-            cancel
+            Cancel
           </button>
         )}
       </div>
     </form>
   );
-};
+}
 
 export default NoteForm;
